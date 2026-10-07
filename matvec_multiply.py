@@ -14,7 +14,15 @@
 import random
 
 
+# Return True for int or float values. bool is a subclass of int in Python,
+# so it is excluded explicitly to avoid treating True/False as 1/0.
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 # Compute the dot product of two vectors using a for loop.
+# NaN and infinity are valid floats and propagate according to normal Python
+# floating-point arithmetic; they are not treated as invalid input.
 def dot_product(vector_a, vector_b):
     # Both inputs must be lists.
     if not isinstance(vector_a, list) or not isinstance(vector_b, list):
@@ -32,10 +40,15 @@ def dot_product(vector_a, vector_b):
 
     # Multiply corresponding elements and accumulate their sum.
     for i in range(len(vector_a)):
-        if not isinstance(vector_a[i], (int, float)) or not isinstance(
-            vector_b[i], (int, float)
-        ):
-            raise TypeError("Vector elements must be numeric.")
+        if not _is_number(vector_a[i]):
+            raise TypeError(
+                f"vector_a element at index {i} must be an int or float."
+            )
+
+        if not _is_number(vector_b[i]):
+            raise TypeError(
+                f"vector_b element at index {i} must be an int or float."
+            )
 
         result += vector_a[i] * vector_b[i]
 
@@ -60,16 +73,25 @@ def matrix_vector_product(matrix, vector):
     result = []
 
     # Each row must be a list and must have the same length as the vector.
-    for row in matrix:
+    for row_index, row in enumerate(matrix):
         if not isinstance(row, list):
-            raise TypeError("Each matrix row must be a list.")
+            raise TypeError(f"Matrix row {row_index} must be a list.")
 
         if len(row) != len(vector):
             raise ValueError(
-                "Each matrix row must have the same length as the vector."
+                f"Matrix row {row_index} has length {len(row)}, but the "
+                f"vector has length {len(vector)}."
             )
 
-        result.append(dot_product(row, vector))
+        # Re-raise element type errors with matrix/vector context, since
+        # dot_product only knows its arguments as vector_a and vector_b.
+        try:
+            result.append(dot_product(row, vector))
+        except TypeError as err:
+            raise TypeError(
+                f"Matrix row {row_index} and the vector must contain only "
+                f"int or float values ({err})"
+            ) from err
 
     return result
 
