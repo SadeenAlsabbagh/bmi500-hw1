@@ -1,3 +1,5 @@
+# BMI500 HW1 code review
+
 
 # create a function to compute the dot product of two vectors using a for loop
 # add comments for the selected function
